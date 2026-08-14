@@ -1,0 +1,627 @@
+---
+import "../styles/global.css";
+import { getCollection } from "astro:content";
+import { SEMESTERS, COURSES, UI, coursesBySemester } from "../data/site";
+
+export const prerender = true;
+
+
+// ── Φόρτωση & ομαδοποίηση εργασιών ανά μάθημα ──────────────────────────────
+const allAssignments = await getCollection("assignments");
+
+const byCourse: Record<string, typeof allAssignments> = {};
+for (const course of COURSES) {
+  byCourse[course.id] = allAssignments
+    .filter((a) => a.data.courseId === course.id)
+    .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
+}
+
+---
+
+<!doctype html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MSc Portfolio — Cybersecurity and AI Technologies | University of Piraeus</title>
+    <meta
+      name="description"
+      content="MSc Portfolio in Cybersecurity and Artificial Intelligence Technologies, University of Piraeus."
+    />
+    <link rel="icon" href="/logo.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      ΚΡΙΣΙΜΟ: τρέχει ΠΡΙΝ ζωγραφιστεί η σελίδα, ώστε να μην υπάρχει
+      "αναλαμπή" άσπρου φόντου (FOUC) όταν το θέμα είναι αποθηκευμένο.
+    -->
+    <script is:inline>
+      (function () {
+        const theme = localStorage.getItem("theme") || "dark";
+        document.documentElement.classList.toggle("dark", theme !== "light");
+
+        const lang = localStorage.getItem("lang") || "en";
+        document.documentElement.lang = lang;
+        document.documentElement.dataset.lang = lang;
+      })();
+    </script>
+  </head>
+
+
+    <!-- ═══ ETHICS MODAL ════════════════════════════════════════════════════ -->
+    <div
+      id="ethics-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ethics-title"
+    >
+      <div class="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-2xl dark:border-white/10 dark:bg-[#0f172a]">
+
+        <!-- Icon (plain text) + Title inline -->
+        <div class="mb-4 flex items-center gap-3">
+          <span class="text-2xl leading-none">⚠️</span>
+          <h2 id="ethics-title" class="font-display text-[17px] font-semibold text-slate-900 dark:text-white">
+            Educational and Research Context
+          </h2>
+        </div>
+
+        <!-- Body -->
+        <p id="ethics-body" class="text-[13px] leading-relaxed text-justify text-slate-600 dark:text-slate-400">
+          This portfolio documents academic assignments completed as part of an MSc programme in Cybersecurity and Artificial Intelligence. All practical work involving offensive security techniques — such as network attacks, exploitation, and malware analysis — was conducted exclusively in controlled, isolated laboratory environments for educational purposes only. No real systems, networks, or individuals were targeted at any point.
+        </p>
+
+        <!-- Lang toggle -->
+        <button
+          id="ethics-lang"
+          class="mt-3 font-mono text-[10px] uppercase tracking-widest text-slate-400 underline underline-offset-2 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition"
+        >Εμφάνιση στα Ελληνικά</button>
+
+        <!-- Close button -->
+        <button
+          id="ethics-close"
+          class="mt-5 w-full rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500 dark:bg-brand-400 dark:text-slate-950 dark:hover:bg-brand-300"
+        >I understand</button>
+      </div>
+    </div>
+
+  <body
+    class="min-h-screen bg-slate-50 font-sans text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200"
+  >
+    <!-- Διακοσμητικό gradient στο πάνω μέρος -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none fixed inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(0,200,245,0.10),transparent)] dark:bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(0,200,245,0.14),transparent)]"
+    >
+    </div>
+
+    <div class="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+      <!-- ═══ HEADER ═══════════════════════════════════════════════════════ -->
+      <header
+        class="flex flex-col gap-6 border-b border-slate-200 py-7 sm:flex-row sm:items-center sm:justify-between sm:gap-8 dark:border-white/10"
+      >
+        <!-- Λογότυπο + Τίτλος -->
+        <div class="flex items-center gap-4">
+          <img
+            src="/logo.png"
+            alt="University of Piraeus"
+            class="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
+            loading="eager"
+          />
+          <div class="flex flex-col gap-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-brand-600 dark:border-brand-400/25 dark:bg-brand-400/10 dark:text-brand-300"
+                data-en={UI.mscBadge.en}
+                data-el={UI.mscBadge.el}>{UI.mscBadge.en}</span
+              >
+              <span
+                class="font-mono text-[11px] font-medium tracking-wide text-slate-500 dark:text-slate-400"
+                data-en={`· ${UI.studentName.en}`}
+                data-el={`· ${UI.studentName.el}`}>· {UI.studentName.en}</span
+              >
+            </div>
+            <h1
+              class="font-display text-lg font-bold leading-tight tracking-tight text-slate-900 sm:text-xl dark:text-white"
+              data-en={UI.degreeTitle.en}
+              data-el={UI.degreeTitle.el}
+            >
+              {UI.degreeTitle.en}
+            </h1>
+            <p
+              class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-slate-500 before:h-px before:w-4 before:bg-gold-500 before:content-[''] dark:text-slate-400"
+              data-en={UI.university.en}
+              data-el={UI.university.el}
+            >
+              {UI.university.en}
+            </p>
+            <p
+              class="pl-6 font-mono text-[10px] uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500"
+              data-en={UI.department.en}
+              data-el={UI.department.el}
+            >
+              {UI.department.en}
+            </p>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+          <!-- Γλώσσα -->
+          <button
+            id="lang-toggle"
+            type="button"
+            aria-label="Switch language"
+            class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs font-semibold tracking-wide text-slate-600 transition hover:border-brand-500/50 hover:text-brand-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-brand-400/50 dark:hover:text-brand-300"
+          >
+            <svg
+              class="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path
+                d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+              ></path>
+            </svg>
+            <span id="lang-label">EN</span>
+          </button>
+
+          <!-- Θέμα -->
+          <button
+            id="theme-toggle"
+            type="button"
+            aria-label="Toggle theme"
+            class="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-brand-500/50 hover:text-brand-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-brand-400/50 dark:hover:text-brand-300"
+          >
+            <!-- Ήλιος: φαίνεται στο dark (πάτα για light) -->
+            <svg
+              class="hidden h-[18px] w-[18px] dark:block"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+              ></path>
+            </svg>
+            <!-- Φεγγάρι: φαίνεται στο light (πάτα για dark) -->
+            <svg
+              class="h-[18px] w-[18px] dark:hidden"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- ═══ ΠΛΟΗΓΗΣΗ ΕΞΑΜΗΝΩΝ ════════════════════════════════════════════ -->
+      <nav class="flex flex-col gap-3.5 pt-8" aria-label="Semester navigation">
+        <span
+          class="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500"
+          data-en={UI.browseLabel.en}
+          data-el={UI.browseLabel.el}>{UI.browseLabel.en}</span
+        >
+
+        <div class="flex flex-wrap items-center gap-2" role="tablist">
+          {
+            SEMESTERS.map((s, i) => (
+              <button
+                type="button"
+                role="tab"
+                data-semester-tab={s.id}
+                aria-selected={i === 0 ? "true" : "false"}
+                aria-controls={`panel-${s.id}`}
+                data-en={s.en}
+                data-el={s.el}
+                class="rounded-lg border px-4 py-2.5 text-sm font-medium transition
+                       border-slate-200 bg-white text-slate-600 hover:border-brand-500/40 hover:text-brand-600
+                       aria-selected:border-brand-500/50 aria-selected:bg-brand-500/10 aria-selected:text-brand-700
+                       dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-brand-400/40 dark:hover:text-brand-300
+                       dark:aria-selected:border-brand-400/50 dark:aria-selected:bg-brand-400/10 dark:aria-selected:text-brand-300"
+              >
+                {s.en}
+              </button>
+            ))
+          }
+          {/* Thesis tab */}
+          <button
+            type="button"
+            role="tab"
+            data-semester-tab="thesis"
+            aria-selected="false"
+            aria-controls="panel-thesis"
+            data-en="Master's Thesis"
+            data-el="Διπλωματική Εργασία"
+            class="rounded-lg border px-4 py-2.5 text-sm font-medium transition
+                   border-slate-200 bg-white text-slate-600 hover:border-gold-500/40 hover:text-gold-600
+                   aria-selected:border-gold-500/50 aria-selected:bg-gold-500/10 aria-selected:text-gold-700
+                   dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-gold-400/40 dark:hover:text-gold-300
+                   dark:aria-selected:border-gold-400/50 dark:aria-selected:bg-gold-400/10 dark:aria-selected:text-gold-300"
+          >
+            Master's Thesis
+          </button>
+        </div>
+      </nav>
+
+      <!-- ═══ ΠΕΡΙΕΧΟΜΕΝΟ ══════════════════════════════════════════════════ -->
+      <main class="pb-24 pt-9">
+        {
+          SEMESTERS.map((semester, si) => (
+            <section
+              id={`panel-${semester.id}`}
+              role="tabpanel"
+              data-semester-panel={semester.id}
+              class:list={["flex-col gap-10", si === 0 ? "flex" : "hidden"]}
+            >
+              {coursesBySemester(semester.id).map((course) => {
+                const items = byCourse[course.id] ?? [];
+
+                return (
+                  <article class="animate-fade-up flex flex-col gap-4">
+                    {/* ── Επικεφαλίδα μαθήματος ── */}
+                    <div class="flex flex-wrap items-center gap-3">
+                      <span class="shrink-0 rounded-md border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-wider text-brand-600 dark:border-brand-400/25 dark:bg-brand-400/10 dark:text-brand-300">
+                        #{course.code}
+                      </span>
+                      <h2
+                        class="font-display text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-lg dark:text-white"
+                        data-en={course.en}
+                        data-el={course.el}
+                      >
+                        {course.en}
+                      </h2>
+                      <div class="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-white/10" />
+                    </div>
+
+                    {/* ── Κάρτες εργασιών ── */}
+                    {items.length > 0 ? (
+                      <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:pl-12 lg:grid-cols-3">
+                        {items.map((a) => {
+                          const d = a.data;
+                          const kindLabel = d.group ? UI.groupLabel : UI.individualLabel;
+                          return (
+                            <div class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none dark:hover:border-brand-400/40 dark:hover:bg-white/[0.06]">
+                              {/* meta: dot + label only */}
+                              <div class="flex items-center gap-2">
+                                <span
+                                  class:list={[
+                                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                                    d.group ? "bg-gold-500" : "bg-brand-500 dark:bg-brand-400",
+                                  ]}
+                                />
+                                <span
+                                  class:list={[
+                                    "font-mono text-[10px] uppercase tracking-[0.12em]",
+                                    d.group
+                                      ? "text-gold-600 dark:text-gold-400"
+                                      : "text-slate-400 dark:text-slate-500",
+                                  ]}
+                                  data-en={kindLabel.en}
+                                  data-el={kindLabel.el}
+                                >
+                                  {kindLabel.en}
+                                </span>
+                              </div>
+
+                              {/* τίτλος (δίγλωσσος) */}
+                              <h3
+                                class="font-display text-[15px] font-semibold leading-snug text-slate-900 dark:text-white"
+                                data-en={d.title}
+                                data-el={d.title_el ?? d.title}
+                              >
+                                {d.title}
+                              </h3>
+
+                              {/* tags — κάτω από τον τίτλο, αριστερά, wrap */}
+                              {d.tags && d.tags.length > 0 && (
+                                <div class="flex flex-wrap gap-1.5">
+                                  {d.tags.map((t) => (
+                                    <span class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 font-mono text-[9px] tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+                                      {t}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* περιγραφή — πλήρης στοίχιση */}
+                              <p
+                                class="flex-1 text-[13px] leading-relaxed text-slate-600 text-justify dark:text-slate-400"
+                                data-en={d.description}
+                                data-el={d.description_el ?? d.description}
+                              >
+                                {d.description}
+                              </p>
+
+                              {/* footer */}
+                              <div class="mt-1 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3.5 dark:border-white/5">
+                                {d.repoLink && (
+                                  <a
+                                    href={d.repoLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-brand-500/40 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:border-brand-400/40 dark:hover:text-brand-300"
+                                  >
+                                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                      <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.38-2.22-.26-4.55-1.14-4.55-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2z" />
+                                    </svg>
+                                    <span data-en={UI.githubBtn.en} data-el={UI.githubBtn.el}>
+                                      {UI.githubBtn.en}
+                                    </span>
+                                  </a>
+                                )}
+                                {d.pdfLink ? (
+                                  <a
+                                    href={d.pdfLinkEn ?? d.pdfLink}
+                                    data-href-en={d.pdfLinkEn ?? d.pdfLink}
+                                    data-href-el={d.pdfLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="ml-auto inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-brand-500 dark:bg-brand-400 dark:text-slate-950 dark:hover:bg-brand-300"
+                                  >
+                                    <svg
+                                      class="h-3.5 w-3.5"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                      <polyline points="14 2 14 8 20 8" />
+                                      <line x1="12" y1="18" x2="12" y2="12" />
+                                      <line x1="9" y1="15" x2="15" y2="15" />
+                                    </svg>
+                                    <span
+                                      data-en={UI.downloadBtn.en}
+                                      data-el={UI.downloadBtn.el}
+                                    >
+                                      {UI.downloadBtn.en}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  !d.repoLink && (
+                                    <span
+                                      class="ml-auto font-mono text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500"
+                                      data-en="No downloadable file"
+                                      data-el="Χωρίς αρχείο λήψης"
+                                    >
+                                      No downloadable file
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* ── Κενή κατάσταση ── */
+                      <div class="sm:pl-12">
+                        <div class="flex max-w-md items-center gap-4 rounded-xl border border-dashed border-slate-300 p-6 dark:border-white/10">
+                          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5">
+                            <svg
+                              class="h-4 w-4 text-slate-400 dark:text-slate-500"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                              <polyline points="13 2 13 9 20 9" />
+                            </svg>
+                          </div>
+                          <div class="flex flex-col gap-0.5">
+                            <span
+                              class="font-mono text-[11px] tracking-wide text-slate-500 dark:text-slate-400"
+                              data-en={UI.emptyTitle.en}
+                              data-el={UI.emptyTitle.el}
+                            >
+                              {UI.emptyTitle.en}
+                            </span>
+                            <span
+                              class="text-xs text-slate-400 dark:text-slate-500"
+                              data-en={UI.emptySub.en}
+                              data-el={UI.emptySub.el}
+                            >
+                              {UI.emptySub.en}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </section>
+          ))
+        }
+
+        {/* ══ THESIS PANEL ══════════════════════════════════════════════════ */}
+        <section
+          id="panel-thesis"
+          role="tabpanel"
+          data-semester-panel="thesis"
+          class="hidden flex-col items-center justify-center py-20 gap-8"
+        >
+          <div class="flex flex-col items-center gap-6 max-w-lg text-center">
+            {/* Animated pulse icon */}
+            <div class="relative flex items-center justify-center">
+              <span class="absolute inline-flex h-20 w-20 rounded-full bg-gold-400/20 animate-ping" />
+              <span class="relative flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/40 bg-gold-500/10">
+                <svg class="h-8 w-8 text-gold-500 dark:text-gold-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <h2
+                class="font-display text-2xl font-semibold text-slate-900 dark:text-white"
+                data-en="Master's Thesis"
+                data-el="Διπλωματική Εργασία"
+              >Master's Thesis</h2>
+              <span
+                class="inline-flex items-center gap-1.5 self-center rounded-full border border-gold-400/40 bg-gold-500/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-gold-600 dark:text-gold-400"
+                data-en="In Progress"
+                data-el="Σε εξέλιξη"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-gold-500 animate-pulse" />
+                In Progress
+              </span>
+            </div>
+
+            <p
+              class="text-[14px] leading-relaxed text-slate-500 dark:text-slate-400 text-center"
+              data-en="The Master's thesis is currently in progress. Results and deliverables will be published upon completion."
+              data-el="Η Διπλωματική Εργασία βρίσκεται αυτή τη στιγμή σε εξέλιξη. Τα αποτελέσματα και τα παραδοτέα θα δημοσιευτούν κατά την ολοκλήρωσή της."
+            >
+              The Master's thesis is currently in progress. Results and deliverables will be published upon completion.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ═══ FOOTER ═════════════════════════════════════════════════════════ -->
+    <footer class="border-t border-slate-200 bg-slate-50 dark:border-white/5 dark:bg-slate-950">
+      <div class="mx-auto max-w-[1200px] px-4 py-5 sm:px-6 lg:px-8">
+        <p class="text-center text-[11px] text-slate-400 dark:text-slate-500">
+          © 2026 Ioannis Kalaitzidis. All rights reserved.
+        </p>
+      </div>
+    </footer>
+
+    <!-- ═══ SCRIPTS ════════════════════════════════════════════════════════ -->
+    <script is:inline>
+      (function () {
+        const root = document.documentElement;
+
+        /* ── 0. Ethics modal ──────────────────────────────────────── */
+        (function() {
+          const modal   = document.getElementById("ethics-modal");
+          const closeBtn = document.getElementById("ethics-close");
+          const langBtn  = document.getElementById("ethics-lang");
+          const body     = document.getElementById("ethics-body");
+          if (!modal) return;
+
+          const EN_TEXT = "This portfolio documents academic assignments completed as part of an MSc programme in Cybersecurity and Artificial Intelligence. All practical work involving offensive security techniques — such as network attacks, exploitation, and malware analysis — was conducted exclusively in controlled, isolated laboratory environments for educational purposes only. No real systems, networks, or individuals were targeted at any point.";
+          const EL_TEXT = "Αυτό το portfolio τεκμηριώνει ακαδημαϊκές εργασίες που εκπονήθηκαν στο πλαίσιο Μεταπτυχιακού Προγράμματος Σπουδών στην Κυβερνοασφάλεια και Τεχνητή Νοημοσύνη. Όλες οι πρακτικές εργασίες που περιλαμβάνουν τεχνικές επίθεσης — όπως επιθέσεις σε δίκτυα, εκμετάλλευση ευπαθειών και ανάλυση κακόβουλου λογισμικού — πραγματοποιήθηκαν αποκλειστικά σε ελεγχόμενα, απομονωμένα εργαστηριακά περιβάλλοντα, για εκπαιδευτικούς σκοπούς μόνο. Σε κανένα στάδιο δεν στοχεύτηκαν πραγματικά συστήματα, δίκτυα ή άτομα.";
+
+          const title    = document.getElementById("ethics-title");
+          const EN_TITLE = "Educational and Research Context";
+          const EL_TITLE = "Εκπαιδευτικό και Ερευνητικό Πλαίσιο";
+
+          let showingEL = false;
+          langBtn.addEventListener("click", function() {
+            showingEL = !showingEL;
+            title.textContent       = showingEL ? EL_TITLE : EN_TITLE;
+            body.textContent        = showingEL ? EL_TEXT  : EN_TEXT;
+            langBtn.textContent     = showingEL ? "Show in English" : "Εμφάνιση στα Ελληνικά";
+            closeBtn.textContent    = showingEL ? "Το κατανοώ" : "I understand";
+          });
+
+          closeBtn.addEventListener("click", function() {
+            modal.style.display = "none";
+          });
+        })();
+
+        /* ── 1. Θέμα (Dark / Light) ─────────────────────────────────────── */
+        // Always start dark — ignore any previously stored theme preference
+        root.classList.add("dark");
+        document.getElementById("theme-toggle").addEventListener("click", () => {
+          root.classList.toggle("dark");
+          // not persisted — resets to dark on every visit
+        });
+
+        /* ── 2. Γλώσσα (EN / EL) ────────────────────────────────────────── */
+        const langLabel = document.getElementById("lang-label");
+
+        function applyLang(lang) {
+          root.lang = lang;
+          root.dataset.lang = lang;
+          langLabel.textContent = lang === "el" ? "ΕΛ" : "EN";
+
+          // Κάθε στοιχείο με data-en / data-el αλλάζει κείμενο.
+          document.querySelectorAll("[data-en]").forEach((el) => {
+            const text = lang === "el" ? el.dataset.el : el.dataset.en;
+            if (text) el.textContent = text;
+          });
+
+          // Κουμπιά PDF: άλλαξε σύνδεσμο ανάλογα με τη γλώσσα (αν υπάρχει αγγλικό PDF).
+          document.querySelectorAll("[data-href-en]").forEach((a) => {
+            const href = lang === "el" ? a.dataset.hrefEl : a.dataset.hrefEn;
+            if (href) a.setAttribute("href", href);
+          });
+
+          localStorage.setItem("lang", lang);
+        }
+
+        document.getElementById("lang-toggle").addEventListener("click", () => {
+          applyLang(root.dataset.lang === "el" ? "en" : "el");
+        });
+
+        applyLang(localStorage.getItem("lang") || "en");
+
+        /* ── 3. Εναλλαγή εξαμήνων ───────────────────────────────────────── */
+        const tabs = document.querySelectorAll("[data-semester-tab]");
+        const panels = document.querySelectorAll("[data-semester-panel]");
+
+        tabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const target = tab.dataset.semesterTab;
+
+            tabs.forEach((t) =>
+              t.setAttribute(
+                "aria-selected",
+                t.dataset.semesterTab === target ? "true" : "false"
+              )
+            );
+
+            panels.forEach((p) => {
+              const active = p.dataset.semesterPanel === target;
+              p.classList.toggle("hidden", !active);
+              p.classList.toggle("flex", active);
+            });
+
+            // semester tab saved intentionally omitted — always opens on Winter
+          });
+        });
+
+        // Winter semester is always the default — no localStorage restore
+      })();
+    </script>
+  </body>
+</html>
