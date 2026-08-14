@@ -1,98 +1,109 @@
-# Portfolio Μεταπτυχιακού — Κυβερνοασφάλεια & ΤΝ
+# MSc Portfolio — Cybersecurity & Artificial Intelligence Technologies
 
-Δίγλωσσο (EN/EL) portfolio site με τις εργασίες του μεταπτυχιακού, φτιαγμένο σε **Astro 6** + **Tailwind CSS 4**.
+A bilingual (EN/EL) portfolio website showcasing academic assignments completed as part of an MSc programme at the University of Piraeus. Built with **Astro 6** + **Tailwind CSS 4**, deployed on Vercel.
+
+🌐 **Live site:** [msc-portfolio-theta.vercel.app](https://msc-portfolio-theta.vercel.app)
 
 ---
 
-## 1. Τι χρειάζεσαι πριν ξεκινήσεις
+## Prerequisites
 
-**Node.js έκδοση 22.12 ή νεότερη.** Για να δεις αν το έχεις, άνοιξε το PowerShell και γράψε:
+**Node.js 22.12 or later.** To check your version:
 
 ```powershell
 node -v
 ```
 
-Αν βγάλει κάτι σαν `v22.x` ή μεγαλύτερο, είσαι εντάξει. Αν όχι (ή βγάλει σφάλμα), κατέβασέ το από το [nodejs.org](https://nodejs.org) (κατέβασε την έκδοση "LTS") και εγκατέστησέ το.
+If it returns `v22.x` or higher you're good. Otherwise download the LTS version from [nodejs.org](https://nodejs.org) and install it.
 
 ---
 
-## 2. Βάλε το λογότυπο
+## Run locally
 
-Στον φάκελο `public/` υπάρχει ένα προσωρινό `logo.png`. **Αντικατέστησέ το** με το πραγματικό λογότυπο του Πανεπιστημίου Πειραιώς (ίδιο όνομα: `logo.png`).
-
----
-
-## 3. Τρέξε το τοπικά
-
-Άνοιξε PowerShell **μέσα στον φάκελο του project** και γράψε μία φορά:
+Install dependencies (first time only):
 
 ```powershell
 npm install
 ```
 
-(Κατεβάζει ό,τι χρειάζεται — θέλει λίγο χρόνο την πρώτη φορά.)
-
-Μετά, κάθε φορά που θες να το δεις:
+Start the development server:
 
 ```powershell
 npm run dev
 ```
 
-Άνοιξε στον browser τη διεύθυνση που θα σου δείξει (συνήθως **http://localhost:4321**). Όποια αλλαγή κάνεις στα αρχεία, ενημερώνεται αυτόματα.
+Open [http://localhost:4321](http://localhost:4321) in your browser. Changes to source files hot-reload automatically.
 
 ---
 
-## 4. Φτιάξε την τελική έκδοση για ανέβασμα
+## Build for production
 
 ```powershell
 npm run build
 ```
 
-Δημιουργείται ο φάκελος **`dist/`** με το έτοιμο site (καθαρά στατικά αρχεία). Αυτόν ανεβάζεις.
-
-Για δωρεάν φιλοξενία, το πιο βολικό είναι το **Vercel**: συνδέεις το GitHub repo σου και κάθε `git push` το ανεβάζει μόνο του. (Αν θέλεις, σου δίνω αναλυτικά βήματα.)
+This generates the `dist/` folder containing the fully static site ready for deployment. Every `git push` to the `main` branch triggers an automatic redeploy on Vercel.
 
 ---
 
-## 5. Πώς προσθέτεις μια νέα εργασία
+## Adding a new assignment
 
-Δύο απλά βήματα:
-
-1. Βάλε το PDF της εργασίας στον φάκελο `public/pdfs/` (π.χ. `nea-ergasia.pdf`).
-2. Φτιάξε ένα νέο αρχείο `.md` στον φάκελο `src/content/assignments/` (π.χ. `nea-ergasia.md`) με αυτή τη μορφή:
+1. Place the PDF in `public/pdfs/` (e.g. `my-assignment.pdf`).
+2. Create a new `.md` file in `src/content/assignments/` (e.g. `my-assignment.md`):
 
 ```markdown
 ---
-title: "New Assignment Title (English)"
+title: "Assignment Title in English"
 description: "Short description in English."
 title_el: "Τίτλος στα Ελληνικά"
 description_el: "Σύντομη περιγραφή στα Ελληνικά."
 courseId: "network-security"
-pdfLink: "/pdfs/nea-ergasia.pdf"
+order: 6
+pdfLink: "/pdfs/my-assignment.pdf"
+pdfLinkEn: "/pdfs/my-assignment-en.pdf"
+repoLink: "https://github.com/Kalaitzon/my-repo"
 tags: ["Tag1", "Tag2"]
 ---
 ```
 
-Τα διαθέσιμα `courseId` είναι στο αρχείο `src/data/site.ts`. Αν μια εργασία δεν έχει έγγραφο, απλώς **παράλειψε τη γραμμή `pdfLink`** (όπως το CyberGame).
+Available `courseId` values are defined in `src/data/site.ts`.  
+If an assignment has no PDF, omit the `pdfLink` line entirely.  
+If there is no GitHub repository, omit the `repoLink` line.
 
 ---
 
-## 6. Δομή φακέλων (τι είναι τι)
+## Project structure
 
 ```
 ├─ public/
-│  ├─ logo.png              ← το λογότυπο (άλλαξέ το)
-│  └─ pdfs/                 ← όλα τα PDF των εργασιών
+│  ├─ logo.png                  ← University logo
+│  └─ pdfs/                     ← All assignment PDFs (Greek + English)
 ├─ src/
-│  ├─ pages/index.astro     ← η κεντρική σελίδα
-│  ├─ data/site.ts          ← μαθήματα, εξάμηνα, μεταφράσεις (εδώ αλλάζεις κείμενα)
-│  ├─ content.config.ts     ← ο κανόνας για τα πεδία των εργασιών
-│  ├─ content/assignments/  ← ένα .md αρχείο ανά εργασία (38 συνολικά)
-│  └─ styles/global.css     ← ρύθμιση Tailwind (χρώματα, γραμματοσειρές, θέμα)
-├─ extras/admin-form/       ← προαιρετική φόρμα προσθήκης (δες extras/README.md)
+│  ├─ pages/index.astro         ← Main page (layout, tabs, cards, scripts)
+│  ├─ data/site.ts              ← Courses, semesters, UI strings (edit text here)
+│  ├─ content.config.ts         ← Assignment schema definition
+│  ├─ content/assignments/      ← One .md file per assignment
+│  └─ styles/global.css         ← Tailwind v4 theme (colours, fonts, dark mode)
+├─ extras/admin-form/           ← Optional assignment-entry form (see extras/README.md)
 ├─ astro.config.mjs
 ├─ package.json
 └─ tsconfig.json
 ```
 
-Τα κείμενα (τίτλοι, ονόματα μαθημάτων, ετικέτες κουμπιών) αλλάζουν όλα από το **`src/data/site.ts`**.
+All UI text (course names, button labels, semester names) can be edited in **`src/data/site.ts`**.
+
+---
+
+## Tech stack
+
+| Tool | Purpose |
+|------|---------|
+| [Astro 6](https://astro.build) | Static site framework |
+| [Tailwind CSS 4](https://tailwindcss.com) | Utility-first styling |
+| [Vercel](https://vercel.com) | Hosting & CI/CD |
+
+---
+
+## Disclaimer
+
+All practical work involving offensive security techniques was conducted exclusively in controlled, isolated laboratory environments for academic and educational purposes only. No real systems, networks, or individuals were targeted at any point.
