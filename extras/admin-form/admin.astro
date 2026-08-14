@@ -1,0 +1,434 @@
+---
+export const prerender = false;
+
+// Η σελίδα υπάρχει μόνο τοπικά. Στο live site κάνει redirect στην αρχική.
+if (!import.meta.env.DEV) {
+  return Astro.redirect("/");
+}
+
+import { SEMESTERS, coursesBySemester } from "../data/site";
+---
+
+<!doctype html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Προσθήκη Εργασίας — MSc Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-base: #080c12;
+        --bg-surface: #0e1420;
+        --bg-card: #111826;
+        --border: rgba(0, 210, 255, 0.1);
+        --border-hover: rgba(0, 210, 255, 0.3);
+        --accent: #00d2ff;
+        --accent-dim: rgba(0, 210, 255, 0.12);
+        --text-primary: #e8edf5;
+        --text-secondary: #7a8ba3;
+        --text-muted: #3d5068;
+        --gold: #c9a227;
+        --danger: #ff5c72;
+        --success: #3ddc84;
+        --font-display: "Playfair Display", Georgia, serif;
+        --font-mono: "JetBrains Mono", monospace;
+        --font-body: "DM Sans", system-ui, sans-serif;
+        --radius: 12px;
+        --radius-sm: 6px;
+        --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: var(--font-body);
+        background-color: var(--bg-base);
+        color: var(--text-primary);
+        min-height: 100vh;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,100,160,.12), transparent);
+        padding: 0 24px 80px;
+      }
+
+      .wrap { max-width: 720px; margin: 0 auto; }
+
+      /* ── Header ── */
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 32px 0 24px;
+        border-bottom: 1px solid var(--border);
+      }
+      .top h1 {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .top-sub {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .back-link {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border: 1px solid rgba(255,255,255,.08);
+        padding: 8px 14px;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition);
+        white-space: nowrap;
+      }
+      .back-link:hover { color: var(--accent); border-color: var(--border-hover); }
+
+      /* ── Dev notice ── */
+      .notice {
+        margin-top: 24px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        background: rgba(201,162,39,.07);
+        border: 1px solid rgba(201,162,39,.22);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+      }
+      .notice strong { color: var(--gold); font-weight: 500; }
+
+      /* ── Form ── */
+      form { margin-top: 28px; display: flex; flex-direction: column; gap: 20px; }
+
+      .field { display: flex; flex-direction: column; gap: 7px; }
+
+      label {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+      label .req { color: var(--accent); }
+
+      .hint { font-size: 11.5px; color: var(--text-muted); }
+
+      input[type="text"], input[type="url"], input[type="date"], select, textarea {
+        font-family: var(--font-body);
+        font-size: 14px;
+        color: var(--text-primary);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 11px 14px;
+        width: 100%;
+        transition: border-color var(--transition), box-shadow var(--transition);
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--border-hover);
+        box-shadow: 0 0 0 3px rgba(0,210,255,.08);
+      }
+      textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+      select { cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a8ba3' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;
+        padding-right: 40px;
+      }
+      select option { background: var(--bg-card); }
+
+      /* ── File drop ── */
+      .drop {
+        border: 1px dashed rgba(0,210,255,.25);
+        border-radius: var(--radius);
+        padding: 26px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        background: rgba(0,210,255,.03);
+      }
+      .drop:hover, .drop.over { border-color: var(--accent); background: rgba(0,210,255,.07); }
+      .drop svg { width: 22px; height: 22px; color: var(--accent); margin-bottom: 8px; }
+      .drop-title { font-size: 13.5px; color: var(--text-primary); }
+      .drop-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+      .drop input[type="file"] { display: none; }
+      .drop.has-file { border-style: solid; border-color: rgba(61,220,132,.4); background: rgba(61,220,132,.05); }
+      .drop.has-file svg { color: var(--success); }
+
+      .divider-or {
+        display: flex; align-items: center; gap: 12px;
+        font-family: var(--font-mono); font-size: 10px;
+        letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted);
+      }
+      .divider-or::before, .divider-or::after {
+        content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.06);
+      }
+
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+      /* ── Submit ── */
+      .submit {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        font-family: var(--font-body); font-size: 14px; font-weight: 500;
+        color: var(--bg-base); background: var(--accent);
+        border: none; border-radius: var(--radius-sm);
+        padding: 13px 24px; cursor: pointer;
+        transition: all var(--transition); margin-top: 4px;
+      }
+      .submit:hover:not(:disabled) { background: #33dbff; box-shadow: 0 0 24px rgba(0,210,255,.4); }
+      .submit:disabled { opacity: .5; cursor: not-allowed; }
+      .submit svg { width: 15px; height: 15px; }
+
+      /* ── Result message ── */
+      .result {
+        display: none; border-radius: var(--radius);
+        padding: 14px 16px; font-size: 13px; line-height: 1.55;
+      }
+      .result.show { display: block; }
+      .result.ok { background: rgba(61,220,132,.08); border: 1px solid rgba(61,220,132,.3); color: var(--success); }
+      .result.err { background: rgba(255,92,114,.08); border: 1px solid rgba(255,92,114,.3); color: var(--danger); }
+      .result code {
+        font-family: var(--font-mono); font-size: 11.5px;
+        background: rgba(0,0,0,.3); padding: 2px 6px; border-radius: 4px;
+      }
+
+      @media (max-width: 560px) {
+        .row { grid-template-columns: 1fr; }
+        .top { flex-direction: column; align-items: flex-start; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <h1>Προσθήκη Εργασίας</h1>
+          <div class="top-sub">Winter Semester · Local Editor</div>
+        </div>
+        <a href="/" class="back-link">← Πίσω στο site</a>
+      </div>
+
+      <div class="notice">
+        <strong>Σημείωση:</strong>
+        <span>
+          Η φόρμα δουλεύει μόνο τοπικά (<code>npm run dev</code>). Δημιουργεί
+          πραγματικά αρχεία στον φάκελο του project — δεν εμφανίζεται ποτέ στο
+          ανεβασμένο site.
+        </span>
+      </div>
+
+      <form id="assignment-form">
+        <!-- Μάθημα -->
+        <div class="field">
+          <label for="courseId">Μάθημα <span class="req">*</span></label>
+          <select id="courseId" name="courseId" required>
+            <option value="">— Διάλεξε μάθημα —</option>
+            {
+              SEMESTERS.map((s) => (
+                <optgroup label={s.el}>
+                  {coursesBySemester(s.id).map((c) => (
+                    <option value={c.id}>
+                      {c.code} · {c.el}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            }
+          </select>
+        </div>
+
+        <!-- Αγγλικά -->
+        <div class="field">
+          <label for="title">Τίτλος — Αγγλικά <span class="req">*</span></label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            placeholder="e.g. Lab 2: Exploiting SMB with Metasploit"
+          />
+          <span class="hint">Από αυτόν βγαίνει και το όνομα του αρχείου.</span>
+        </div>
+
+        <div class="field">
+          <label for="description">Περιγραφή — Αγγλικά <span class="req">*</span></label>
+          <textarea
+            id="description"
+            name="description"
+            required
+            placeholder="Short description of what the assignment covers…"></textarea>
+        </div>
+
+        <!-- Ελληνικά -->
+        <div class="field">
+          <label for="title_el">Τίτλος — Ελληνικά</label>
+          <input
+            type="text"
+            id="title_el"
+            name="title_el"
+            placeholder="π.χ. Εργασία 2: Εκμετάλλευση SMB με Metasploit"
+          />
+          <span class="hint">Προαιρετικό — αν το αφήσεις κενό, θα δείχνει τα αγγλικά.</span>
+        </div>
+
+        <div class="field">
+          <label for="description_el">Περιγραφή — Ελληνικά</label>
+          <textarea
+            id="description_el"
+            name="description_el"
+            placeholder="Σύντομη περιγραφή του τι καλύπτει η εργασία…"></textarea>
+        </div>
+
+        <!-- PDF Upload -->
+        <div class="field">
+          <label>Αρχείο PDF</label>
+          <label class="drop" id="drop-zone" for="pdfFile">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <div class="drop-title" id="drop-title">Σύρε το PDF εδώ ή κάνε κλικ</div>
+            <div class="drop-sub" id="drop-sub">Θα αποθηκευτεί στο public/pdfs/</div>
+            <input type="file" id="pdfFile" name="pdfFile" accept="application/pdf" />
+          </label>
+        </div>
+
+        <div class="divider-or">ή</div>
+
+        <!-- Εξωτερικό link -->
+        <div class="field">
+          <label for="pdfUrl">Εξωτερικό Link PDF</label>
+          <input
+            type="url"
+            id="pdfUrl"
+            name="pdfUrl"
+            placeholder="https://drive.google.com/…"
+          />
+          <span class="hint">Χρησιμοποίησέ το αν το PDF είναι ήδη ανεβασμένο κάπου αλλού.</span>
+        </div>
+
+        <!-- Ημερομηνία + Tags -->
+        <div class="row">
+          <div class="field">
+            <label for="publishedDate">Ημερομηνία</label>
+            <input type="date" id="publishedDate" name="publishedDate" />
+          </div>
+          <div class="field">
+            <label for="tags">Tags</label>
+            <input type="text" id="tags" name="tags" placeholder="Nmap, Metasploit, SMB" />
+          </div>
+        </div>
+
+        <button type="submit" class="submit" id="submit-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span id="submit-text">Δημιουργία Εργασίας</span>
+        </button>
+
+        <div class="result" id="result"></div>
+      </form>
+    </div>
+
+    <script is:inline>
+      const form = document.getElementById("assignment-form");
+      const fileInput = document.getElementById("pdfFile");
+      const dropZone = document.getElementById("drop-zone");
+      const dropTitle = document.getElementById("drop-title");
+      const dropSub = document.getElementById("drop-sub");
+      const result = document.getElementById("result");
+      const btn = document.getElementById("submit-btn");
+      const btnText = document.getElementById("submit-text");
+
+      // Προεπιλογή: σημερινή ημερομηνία
+      document.getElementById("publishedDate").value =
+        new Date().toISOString().slice(0, 10);
+
+      function showFile(file) {
+        if (!file) return;
+        dropZone.classList.add("has-file");
+        dropTitle.textContent = file.name;
+        dropSub.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB — έτοιμο";
+      }
+
+      fileInput.addEventListener("change", () => showFile(fileInput.files[0]));
+
+      ["dragenter", "dragover"].forEach((e) =>
+        dropZone.addEventListener(e, (ev) => {
+          ev.preventDefault();
+          dropZone.classList.add("over");
+        })
+      );
+      ["dragleave", "drop"].forEach((e) =>
+        dropZone.addEventListener(e, (ev) => {
+          ev.preventDefault();
+          dropZone.classList.remove("over");
+        })
+      );
+      dropZone.addEventListener("drop", (ev) => {
+        const file = ev.dataTransfer.files[0];
+        if (file) {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          fileInput.files = dt.files;
+          showFile(file);
+        }
+      });
+
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        btn.disabled = true;
+        btnText.textContent = "Δημιουργία…";
+        result.className = "result";
+
+        try {
+          const res = await fetch("/api/add-assignment", {
+            method: "POST",
+            body: new FormData(form),
+          });
+          const data = await res.json();
+
+          if (data.ok) {
+            result.className = "result show ok";
+            result.innerHTML =
+              "✓ Έτοιμο! Δημιουργήθηκε το <code>" +
+              data.file +
+              "</code><br>Η εργασία εμφανίζεται ήδη στην αρχική σελίδα.";
+            form.reset();
+            dropZone.classList.remove("has-file");
+            dropTitle.textContent = "Σύρε το PDF εδώ ή κάνε κλικ";
+            dropSub.textContent = "Θα αποθηκευτεί στο public/pdfs/";
+            document.getElementById("publishedDate").value =
+              new Date().toISOString().slice(0, 10);
+          } else {
+            result.className = "result show err";
+            result.textContent = "✕ " + data.error;
+          }
+        } catch (err) {
+          result.className = "result show err";
+          result.textContent = "✕ Σφάλμα σύνδεσης: " + err.message;
+        } finally {
+          btn.disabled = false;
+          btnText.textContent = "Δημιουργία Εργασίας";
+        }
+      });
+    </script>
+  </body>
+</html>

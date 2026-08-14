@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "title_el": {
+      "type": "string"
+    },
+    "description_el": {
+      "type": "string"
+    },
+    "courseId": {
+      "type": "string",
+      "enum": [
+        "security-assessment-ethical-hacking",
+        "network-security",
+        "information-security-management",
+        "applied-cryptography-cryptanalysis",
+        "wireless-mobile-network-security",
+        "cyber-defense-digital-forensics",
+        "security-privacy-legal-framework",
+        "advanced-topics-cybersecurity-ai"
+      ]
+    },
+    "order": {
+      "default": 99,
+      "type": "number"
+    },
+    "group": {
+      "default": false,
+      "type": "boolean"
+    },
+    "pdfLink": {
+      "type": "string"
+    },
+    "pdfLinkEn": {
+      "type": "string"
+    },
+    "repoLink": {
+      "type": "string",
+      "format": "uri"
+    },
+    "publishedDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tags": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "$schema": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "courseId"
+  ]
+}
