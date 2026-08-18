@@ -8,7 +8,7 @@ order: 6
 group: true
 pdfLink: "/pdfs/scamai-generative-defense.pdf"
 pdfLinkEn: "/pdfs/scamai-generative-defense-en.pdf"
-repoLink: "https://github.com/Chrisavas/spam-scam-email-detector"
+repoLink: "https://github.com/Kalaitzon/spam-scam-email-detector"
 tags: ["Generative AI", "Scambaiting", "Responsible AI"]
 ---
 
